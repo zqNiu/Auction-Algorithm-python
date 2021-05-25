@@ -8,8 +8,8 @@ def auction_asy(cost_matrix,minimize=False):
     ----------
     cost_matrix : array
         The cost matrix of the assignment.
-    maximize : bool (default: False)
-        Calculates a maximum weight matching if true.
+    minimize : bool (default: False)
+        Calculates a minimize weight matching if true.
     Returns
     -------
     assign : array
@@ -45,10 +45,10 @@ def auction_asy(cost_matrix,minimize=False):
     N=99999
     num_person=num_object=cost_matrix.shape[0]
     assign=np.asarray([-N]*(num_person))
-    epsilon=10
-    price=np.asarray([1]*(num_object))
+    epsilon=abs(np.min(cost_matrix))+1
+    price=np.asarray([np.min(cost_matrix)]*(num_object))
 
-    while(epsilon >= 0.8):
+    while(abs(epsilon) >1/num_person):
         assign=np.asarray([-N]*(num_person))
         time_start=time.time()
         while ((assign<0).any()):
@@ -71,7 +71,10 @@ def auction_asy(cost_matrix,minimize=False):
                         elif margin>second_margin:
                             second_margin=margin
                             second_margin_j_index=j
-
+                            
+                    if (second_margin==-N):   # only one positive bid for j
+                        second_margin=best_margin
+                        
                     bid_value[i][best_margin_j_index]=cost_matrix[i][best_margin_j_index]-\
                                                       second_margin+epsilon
                     # also =price[best_margin_j_index]+best_margin-second_margin+epsilon
@@ -94,11 +97,15 @@ def auction_asy(cost_matrix,minimize=False):
         obj=0
         for i in range(num_person):
             obj+=cost_matrix[i][assign[i]]
+        if minimize:
+            obj=-obj
         print(epsilon,obj,time.time()-time_start)
         
     obj=0
     for i in range(num_person):
         obj+=cost_matrix[i][assign[i]]
+    if minimize:
+        obj=-obj
     return {"assign":assign,"obj":obj}
 
 if __name__=="__main__":
